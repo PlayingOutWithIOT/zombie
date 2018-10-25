@@ -47,6 +47,12 @@ public class WitchScript : MonoBehaviour {
         animStartTime = Time.time;
     }
 
+    void Walk()
+    {
+        m_anim.SetTrigger("Walk");
+        ChangeState(ZombieState.Walking);
+    }
+
     void Retreat()
     {
         m_anim.SetTrigger("Retreat");
@@ -66,11 +72,13 @@ public class WitchScript : MonoBehaviour {
         float elapsedTime = Time.time - animStartTime;
         int avNum = 0;
 
-        if (Input.GetKey(KeyCode.N))
+        if (Input.GetKey(KeyCode.W))
         {
-            ChangeState(ZombieState.Walking);
-
-            m_anim.SetTrigger("Walk");
+            Walk();
+        }
+        if (Input.GetKey(KeyCode.R))
+        {
+            Retreat();
         }
 
         if (stream.IsOpen)
@@ -110,20 +118,8 @@ public class WitchScript : MonoBehaviour {
                     {
                         if (avNum < 100)
                         {
-                            ChangeState(ZombieState.Walking);
-
-                            m_anim.SetTrigger("Walk");
-
+                            Walk();
                             Debug.Log("Set animation to walk: " + animStartTime);
-                        }
-                    }
-                    if (state == ZombieState.Walking)
-                    {
-                        if (m_position.z > 8.0f )
-                        {
-                            ChangeState(ZombieState.Attack);
-                            m_anim.SetTrigger("Attack");
-                            Debug.Log("Set animation to attack: " + animStartTime);
                         }
                     }
                     if (state == ZombieState.Attack)
@@ -138,6 +134,15 @@ public class WitchScript : MonoBehaviour {
             }
             catch (Exception e)
             {
+            }
+        }
+        if (state == ZombieState.Walking)
+        {
+            if (m_position.z > 8.0f)
+            {
+                ChangeState(ZombieState.Attack);
+                m_anim.SetTrigger("Attack");
+                Debug.Log("Set animation to attack: " + animStartTime);
             }
         }
 

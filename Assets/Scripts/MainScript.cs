@@ -43,7 +43,7 @@ public class MainScript : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKey(KeyCode.R))
+        if (Input.GetKey(KeyCode.Escape))
         {
             m_MyEvent.Invoke();
 
