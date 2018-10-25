@@ -15,11 +15,16 @@ public class WitchScript : MonoBehaviour {
     Animator m_anim;
 
     private SerialPort stream = new SerialPort("\\\\.\\COM12", 9600);
-    private float walkStartTime = 0;
-    private float deathStartTime = 0;
-    private bool isWalking = false;
-    private bool isDead = false;
+    private ZombieState state;
+    private float animStartTime = 0;
     private List<int> list = new List<int>();
+
+    enum ZombieState {
+        Idle,
+        Walking,
+        Attack,
+        Retreat,
+    }
 
     // Use this for initialization
     void Start ()
@@ -33,15 +38,19 @@ public class WitchScript : MonoBehaviour {
         stream.Open();
         stream.BaseStream.Flush();
 
-        walkStartTime = 0;
-        isWalking = false;
-        isDead = false;
+        ChangeState(ZombieState.Idle);
+    }
+
+    void ChangeState(ZombieState newState)
+    {
+        state = newState;
+        animStartTime = Time.time;
     }
 
     void Retreat()
     {
         m_anim.SetTrigger("Retreat");
-        isDead = true;
+        ChangeState(ZombieState.Retreat);
     }
 
     // Update is called once per frame
@@ -54,7 +63,7 @@ public class WitchScript : MonoBehaviour {
             Retreat();
         }
 
-        float elapsedWalkTime = Time.time - walkStartTime;
+        float elapsedTime = Time.time - animStartTime;
         int avNum = 0;
 
         if (stream.IsOpen)
@@ -90,23 +99,21 @@ public class WitchScript : MonoBehaviour {
                     avNum /= list.Count;
 
                     // Average between 10 and 100
-                    if(avNum < 100 )
+                    if (state == ZombieState.Idle)
                     {
-                        if (!isWalking)
+                        if( avNum < 100 )
                         {
-                            isWalking = true;
+                            ChangeState(ZombieState.Walking);
 
-                            walkStartTime = Time.time;
                             m_anim.SetTrigger("Walk");
 
-                            Debug.Log("Set animation to walk: " + walkStartTime);
+                            Debug.Log("Set animation to walk: " + animStartTime);
                         }
                     }
-
-                    // Average between 10 and 100
-                    if(avNum < 50 )
+                    if (state == ZombieState.Walking )
                     {
-                        if (elapsedWalkTime > 5.0f)
+                        // Average between 10 and 100
+                        if( (avNum < 50 ) && (elapsedTime > 5.0f) )
                         {
                             Retreat();
                         }
@@ -121,7 +128,7 @@ public class WitchScript : MonoBehaviour {
         m_text.text = "Vars: " +
         m_position.z.ToString("0.00") + "\n" +
         avNum.ToString("0.00") + "\n" +
-        elapsedWalkTime.ToString("0.00") + "\n" +
+        elapsedTime.ToString("0.00") + "\n" +
         "List count " + list.Count;
 
         m_anim.SetFloat("Position", m_position.z);
