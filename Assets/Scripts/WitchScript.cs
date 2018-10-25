@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO.Ports;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,8 @@ public class WitchScript : MonoBehaviour {
     private Vector3 m_position;
     Animator m_anim;
 
+    private SerialPort stream = new SerialPort("\\\\.\\COM12", 9600);
+
     // Use this for initialization
     void Start ()
     {
@@ -20,6 +23,9 @@ public class WitchScript : MonoBehaviour {
         m_text = m_textGameObject.GetComponent<Text>();
 
         btn1.onClick.AddListener(TaskOnClick);
+
+        stream.Open();
+        stream.BaseStream.Flush();
     }
 
     // Update is called once per frame
@@ -27,17 +33,41 @@ public class WitchScript : MonoBehaviour {
         //Witch.transform.Translate(new Vector3(0, cameraSpeed, 0));
 
         m_position = m_witchSkin.transform.position;
-        m_text.text = "Position: " + 
-            m_position.x.ToString("#.##") + "," +
-            m_position.y.ToString("#.##") + "," +
-            m_position.z.ToString("#.##");
-
-        m_anim.SetFloat("Position", m_position.z);
 
         if (Input.GetKey(KeyCode.Return ))
         {
             m_anim.SetTrigger("Retreat");
         }
+
+        int valueNum = 0;
+
+        if (stream.IsOpen)
+        {
+            string value = stream.ReadLine();
+
+            valueNum = int.Parse(value);
+            if (valueNum > 0)
+            {
+                Debug.Log("Was line: " + valueNum);
+
+                if (valueNum < 200)
+                {
+                    if ( !m_anim.GetCurrentAnimatorStateInfo(0).IsName("walk 0") )
+                    {
+                        m_anim.SetTrigger("Walk");
+                    }
+                }
+            }
+        }
+
+        m_text.text = "Position: " +
+        m_position.x.ToString("0.00") + "," +
+        m_position.y.ToString("0.00") + "," +
+        m_position.z.ToString("0.00") + "," +
+        valueNum.ToString("0.00");
+
+        m_anim.SetFloat("Position", m_position.z);
+
     }
 
     void TaskOnClick()

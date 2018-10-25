@@ -49,19 +49,5 @@ public class MainScript : MonoBehaviour {
 
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
-
-        if (Input.GetKey(KeyCode.L))
-        {
-            //   // Ball.transform.Translate(new Vector3(0, cameraSpeed, 0));
-            Debug.Log("Apply force");
-
-            if (Ball)
-            {
-                rb = Ball.GetComponent<Rigidbody>();
-
-                const float thrust = 0.001f;
-                rb.AddForce(0, 0, thrust, ForceMode.Impulse);
-            }
-        }
     }
 }
