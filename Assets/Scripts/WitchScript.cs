@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO.Ports;
 using UnityEngine;
@@ -14,6 +15,9 @@ public class WitchScript : MonoBehaviour {
     Animator m_anim;
 
     private SerialPort stream = new SerialPort("\\\\.\\COM12", 9600);
+    private float animStartTime = 0;
+    private bool isWalking = false;
+    private List<int> list = new List<int>();
 
     // Use this for initialization
     void Start ()
@@ -26,12 +30,14 @@ public class WitchScript : MonoBehaviour {
 
         stream.Open();
         stream.BaseStream.Flush();
+
+        animStartTime = 0;
+        isWalking = false;
     }
 
     // Update is called once per frame
     void Update () {
-        //Witch.transform.Translate(new Vector3(0, cameraSpeed, 0));
-
+        // Get the transform
         m_position = m_witchSkin.transform.position;
 
         if (Input.GetKey(KeyCode.Return ))
@@ -40,34 +46,68 @@ public class WitchScript : MonoBehaviour {
         }
 
         int valueNum = 0;
+        float elapsedTime = Time.time - animStartTime;
 
         if (stream.IsOpen)
         {
             string value = stream.ReadLine();
 
-            valueNum = int.Parse(value);
-            if (valueNum > 0)
+            try
             {
-                Debug.Log("Was line: " + valueNum);
+                valueNum = int.Parse(value);
 
-                if (valueNum < 200)
+                if (valueNum > 0)
                 {
-                    if ( !m_anim.GetCurrentAnimatorStateInfo(0).IsName("walk 0") )
+                    list.Add(valueNum);
+                }
+
+                if (list.Count > 10)
+                {
+                    list.RemoveAt(0);
+
+                    // Average a list
+                    int avNum = 0;
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        m_anim.SetTrigger("Walk");
+                        avNum += list[i];
+                    }
+                    avNum /= list.Count;
+
+                    // Average between 10 and 100
+                    if( valueNum < 100 )
+                    {
+                        if (!isWalking)
+                        {
+                            isWalking = true;
+
+                            animStartTime = Time.time;
+                            m_anim.SetTrigger("Walk");
+
+                            Debug.Log("Set animation to walk: " + animStartTime);
+                        }
+                    }
+
+                    // Average between 10 and 100
+                    if( valueNum < 50 )
+                    {
+                        if (elapsedTime > 5.0f)
+                        {
+                            m_anim.SetTrigger("Retreat");
+                        }
                     }
                 }
             }
+            catch (Exception e)
+            {
+            }
         }
 
-        m_text.text = "Position: " +
-        m_position.x.ToString("0.00") + "," +
-        m_position.y.ToString("0.00") + "," +
-        m_position.z.ToString("0.00") + "," +
-        valueNum.ToString("0.00");
+        m_text.text = "Vars: " +
+        m_position.z.ToString("0.00") + "\n" +
+        valueNum.ToString("0.00") + "\n" +
+        elapsedTime.ToString("0.00");
 
         m_anim.SetFloat("Position", m_position.z);
-
     }
 
     void TaskOnClick()
