@@ -10,8 +10,11 @@ public class WitchScript : MonoBehaviour {
     public GameObject m_playAnim;
     public GameObject m_witchSkin;
     public GameObject m_textGameObject;
+    public GameObject m_zombieMoan;
+
     private Text m_text;
     private Vector3 m_position;
+    private AudioSource m_zombieMoanSource;
     Animator m_anim;
 
     private SerialPort stream = new SerialPort("\\\\.\\COM12", 9600);
@@ -32,6 +35,7 @@ public class WitchScript : MonoBehaviour {
         Button btn1 = m_playAnim.GetComponent<Button>();
         m_anim = m_witchSkin.GetComponent<Animator>();
         m_text = m_textGameObject.GetComponent<Text>();
+        m_zombieMoanSource = m_zombieMoan.GetComponent<AudioSource>();
 
         btn1.onClick.AddListener(TaskOnClick);
 
@@ -55,6 +59,7 @@ public class WitchScript : MonoBehaviour {
 
     void Retreat()
     {
+        m_zombieMoanSource.Stop();
         m_anim.SetTrigger("Retreat");
         ChangeState(ZombieState.Retreat);
     }
@@ -144,6 +149,9 @@ public class WitchScript : MonoBehaviour {
                 m_anim.SetTrigger("Attack");
                 Debug.Log("Set animation to attack: " + animStartTime);
             }
+        }
+        if (state == ZombieState.Retreat)
+        {
         }
 
         m_text.text = "Vars: " +
