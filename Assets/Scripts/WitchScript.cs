@@ -15,8 +15,10 @@ public class WitchScript : MonoBehaviour {
     Animator m_anim;
 
     private SerialPort stream = new SerialPort("\\\\.\\COM12", 9600);
-    private float animStartTime = 0;
+    private float walkStartTime = 0;
+    private float deathStartTime = 0;
     private bool isWalking = false;
+    private bool isDead = false;
     private List<int> list = new List<int>();
 
     // Use this for initialization
@@ -31,8 +33,15 @@ public class WitchScript : MonoBehaviour {
         stream.Open();
         stream.BaseStream.Flush();
 
-        animStartTime = 0;
+        walkStartTime = 0;
         isWalking = false;
+        isDead = false;
+    }
+
+    void Retreat()
+    {
+        m_anim.SetTrigger("Retreat");
+        isDead = true;
     }
 
     // Update is called once per frame
@@ -42,31 +51,38 @@ public class WitchScript : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.Return ))
         {
-            m_anim.SetTrigger("Retreat");
+            Retreat();
         }
 
-        int valueNum = 0;
-        float elapsedTime = Time.time - animStartTime;
+        float elapsedWalkTime = Time.time - walkStartTime;
+        int avNum = 0;
 
         if (stream.IsOpen)
         {
+            // Read the stream
             string value = stream.ReadLine();
 
             try
             {
-                valueNum = int.Parse(value);
-
-                if (valueNum > 0)
+                // Get the value
                 {
-                    list.Add(valueNum);
+                    int valueNum = int.Parse(value);
+
+                    // Add to the list
+                    if (valueNum > 0)
+                    {
+                        if (list.Count > 10)
+                        {
+                            list.RemoveAt(0);
+                        }
+                        list.Add(valueNum);
+                    }
                 }
 
+                // Check the list
                 if (list.Count > 10)
                 {
-                    list.RemoveAt(0);
-
                     // Average a list
-                    int avNum = 0;
                     for (int i = 0; i < list.Count; i++)
                     {
                         avNum += list[i];
@@ -74,25 +90,25 @@ public class WitchScript : MonoBehaviour {
                     avNum /= list.Count;
 
                     // Average between 10 and 100
-                    if( valueNum < 100 )
+                    if(avNum < 100 )
                     {
                         if (!isWalking)
                         {
                             isWalking = true;
 
-                            animStartTime = Time.time;
+                            walkStartTime = Time.time;
                             m_anim.SetTrigger("Walk");
 
-                            Debug.Log("Set animation to walk: " + animStartTime);
+                            Debug.Log("Set animation to walk: " + walkStartTime);
                         }
                     }
 
                     // Average between 10 and 100
-                    if( valueNum < 50 )
+                    if(avNum < 50 )
                     {
-                        if (elapsedTime > 5.0f)
+                        if (elapsedWalkTime > 5.0f)
                         {
-                            m_anim.SetTrigger("Retreat");
+                            Retreat();
                         }
                     }
                 }
@@ -104,8 +120,9 @@ public class WitchScript : MonoBehaviour {
 
         m_text.text = "Vars: " +
         m_position.z.ToString("0.00") + "\n" +
-        valueNum.ToString("0.00") + "\n" +
-        elapsedTime.ToString("0.00");
+        avNum.ToString("0.00") + "\n" +
+        elapsedWalkTime.ToString("0.00") + "\n" +
+        "List count " + list.Count;
 
         m_anim.SetFloat("Position", m_position.z);
     }
