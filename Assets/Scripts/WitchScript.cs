@@ -66,6 +66,13 @@ public class WitchScript : MonoBehaviour {
         float elapsedTime = Time.time - animStartTime;
         int avNum = 0;
 
+        if (Input.GetKey(KeyCode.N))
+        {
+            ChangeState(ZombieState.Walking);
+
+            m_anim.SetTrigger("Walk");
+        }
+
         if (stream.IsOpen)
         {
             // Read the stream
@@ -101,7 +108,7 @@ public class WitchScript : MonoBehaviour {
                     // Average between 10 and 100
                     if (state == ZombieState.Idle)
                     {
-                        if( avNum < 100 )
+                        if (avNum < 100)
                         {
                             ChangeState(ZombieState.Walking);
 
