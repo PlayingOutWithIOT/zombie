@@ -112,7 +112,7 @@ public class WitchScript : MonoBehaviour {
                     }
                     if (state == ZombieState.Walking)
                     {
-                        if (m_position.z > 8.25f )
+                        if (m_position.z > 8.0f )
                         {
                             ChangeState(ZombieState.Attack);
                             m_anim.SetTrigger("Attack");
