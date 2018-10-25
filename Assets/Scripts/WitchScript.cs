@@ -110,7 +110,16 @@ public class WitchScript : MonoBehaviour {
                             Debug.Log("Set animation to walk: " + animStartTime);
                         }
                     }
-                    if (state == ZombieState.Walking )
+                    if (state == ZombieState.Walking)
+                    {
+                        if (m_position.z > 8.25f )
+                        {
+                            ChangeState(ZombieState.Attack);
+                            m_anim.SetTrigger("Attack");
+                            Debug.Log("Set animation to attack: " + animStartTime);
+                        }
+                    }
+                    if (state == ZombieState.Attack)
                     {
                         // Average between 10 and 100
                         if( (avNum < 50 ) && (elapsedTime > 5.0f) )
@@ -130,8 +139,6 @@ public class WitchScript : MonoBehaviour {
         avNum.ToString("0.00") + "\n" +
         elapsedTime.ToString("0.00") + "\n" +
         "List count " + list.Count;
-
-        m_anim.SetFloat("Position", m_position.z);
     }
 
     void TaskOnClick()

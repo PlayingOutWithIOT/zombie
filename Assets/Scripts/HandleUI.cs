@@ -10,6 +10,9 @@ public class HandleUI : MonoBehaviour {
 
     void Start()
     {
+        RenderSettings.ambientLight = Color.black;
+        Cursor.visible = false;
+
         Button resetButton = m_resetScene.GetComponent<Button>();
         Button playButton = m_playAnim.GetComponent<Button>();
        
