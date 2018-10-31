@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class HandleUI : MonoBehaviour {
     public GameObject m_resetScene, m_playAnim, m_textPosition, m_textReset;
     public Canvas m_canvas;
+    private bool m_hidden = true;
 
     void Start()
     {
@@ -26,8 +27,9 @@ public class HandleUI : MonoBehaviour {
 
     void Update()
     {
-        if (Input.GetKey(KeyCode.H))
+        if (Input.GetKeyDown(KeyCode.H))
         {
+            m_hidden = !m_hidden;
             ShowUI();
         }
     }
@@ -36,10 +38,10 @@ public class HandleUI : MonoBehaviour {
     {
         //Output this to console when the Button is clicked
         Debug.Log("You have clicked the button!");
-        m_resetScene.SetActive(true);
-        m_playAnim.SetActive(true);
-        m_textPosition.SetActive(true);
-        m_textReset.SetActive(true);
+        m_resetScene.SetActive(m_hidden);
+        m_playAnim.SetActive(m_hidden);
+        m_textPosition.SetActive(m_hidden);
+        m_textReset.SetActive(m_hidden);
     }
 
     void ResetSceneClick()

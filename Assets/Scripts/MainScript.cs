@@ -4,22 +4,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-// Basic Learning:
-// Play animations
-// Play sound
-// Add 2d interface
-// Mouse control
-// Mouse buttons
-//
-// Advanced Learning:
-// Add a rag-doll dynamically
-// Create a shader
-//
-// Done:
-// Keyboard entry
-// Transforms
-// Applying force to a rigid body
-
 public class MainScript : MonoBehaviour {
     public GameObject Ball = null;
 

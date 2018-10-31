@@ -748,6 +748,7 @@ MonoBehaviour:
   m_witchSkin: {fileID: 391760042}
   m_textGameObject: {fileID: 367512568}
   m_zombieMoan: {fileID: 1982026123}
+  m_zombie: {fileID: 391760042}
 --- !u!1 &1473495211
 GameObject:
   m_ObjectHideFlags: 0
