@@ -28,8 +28,8 @@ public class HandleUI : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.H))
         {
-            m_hidden = !m_hidden;
-            ShowUI();
+           ShowUI();
+           m_hidden = !m_hidden;
         }
     }
 

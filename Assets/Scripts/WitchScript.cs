@@ -27,11 +27,9 @@ public class WitchScript : MonoBehaviour {
     private List<int> m_list = new List<int>();
     private String m_comPort;
     private Thread mThread;
-    private int m_avValue = 0;
+    private float m_avValue = 0;
     private Vector3 m_originalPosition;
     private float m_triggerDistance = 0;
-    private int m_checkCount = 0;
-
     public bool m_isRunning = true;
 
     enum ZombieState {
@@ -97,6 +95,8 @@ public class WitchScript : MonoBehaviour {
             Debug.Log("Could not open COM port: " + e.Message);
         }
 
+        int checkCount = 0;
+
         while (threadController.m_isRunning)
         {
             try
@@ -105,23 +105,20 @@ public class WitchScript : MonoBehaviour {
                 {
                     // Read the stream
                     string value = stream.ReadLine();
-                    Debug.Log("COM value: " + value);
-
-                    m_checkCount++;
+                   
+                    checkCount++;
 
                     // Get the value
-                    {
-                        int valueNum = int.Parse(value);
+                    int valueNum = int.Parse(value);
 
-                        // Add to the list
-                        if (valueNum > 0)
+                    // Add to the list
+                    if (valueNum > 0)
+                    {
+                        if (m_list.Count > 10)
                         {
-                            if (m_list.Count > 10)
-                            {
-                                m_list.RemoveAt(0);
-                            }
-                            m_list.Add(valueNum);
+                            m_list.RemoveAt(0);
                         }
+                        m_list.Add(valueNum);
                     }
 
                     int avNum = 0;
@@ -136,7 +133,8 @@ public class WitchScript : MonoBehaviour {
                         }
                         avNum /= m_list.Count;
                     }
-                    m_avValue = avNum;
+                    m_avValue = (float) avNum;
+                    //m_avValue = (float) valueNum;
                 }
             }
             catch (Exception e)
@@ -144,7 +142,7 @@ public class WitchScript : MonoBehaviour {
                 Debug.Log("Could not read from COM port: " + e.Message);
             }
         }
-        Debug.Log("Thread ended");
+        Debug.Log("My own thread ended with " + checkCount + " iterations.");
     }
 
     private void OnDestroy()
@@ -227,7 +225,7 @@ public class WitchScript : MonoBehaviour {
         }
         else if (state == ZombieState.Attack)
         {
-            // Average between 10 and 100
+            // Make the zombie retreat if we are in close
             if ((m_avValue > 10) && (m_avValue < m_triggerDistance) && (elapsedTime > 5.0f))
             {
                 Retreat();
@@ -248,7 +246,7 @@ public class WitchScript : MonoBehaviour {
 
         m_text.text = "Version 31.2\n" +
         "Zombie position: " + m_position.z.ToString("0.00") + "\n" +
-        "Sensed distance: " + m_avValue.ToString("0.00") + " " + m_checkCount.ToString() + " " + m_list.Count + "\n" +
+        "Sensed distance: " + m_avValue.ToString("0.00") + " " +
         "Elapsed: " + elapsedTime.ToString("0.00") + "\n" +
         "Trigger: " + m_triggerDistance.ToString("0.00") + "\n" +
         "COM Port: " + m_comPort;
@@ -256,7 +254,7 @@ public class WitchScript : MonoBehaviour {
 
     void TaskOnClick()
     {
-        Debug.Log("Clicked on start witch anim: " );
+        Debug.Log("Clicked on start zombie anim: " );
 
         //m_anim.Play("idle");
         m_anim.SetTrigger("Walk");
