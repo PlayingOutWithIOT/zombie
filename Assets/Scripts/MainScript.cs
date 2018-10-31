@@ -5,9 +5,6 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 public class MainScript : MonoBehaviour {
-    public GameObject Ball = null;
-
-    private Rigidbody rb = null;
     private UnityEvent m_MyEvent = null;
 
     // Use this for initialization

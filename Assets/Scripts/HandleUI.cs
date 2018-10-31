@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class HandleUI : MonoBehaviour {
+public class HandleUI : MonoBehaviour
+{
     public GameObject m_resetScene, m_playAnim, m_textPosition, m_textReset;
     public Canvas m_canvas;
     private bool m_hidden = true;
@@ -15,12 +16,10 @@ public class HandleUI : MonoBehaviour {
         Cursor.visible = false;
 
         Button resetButton = m_resetScene.GetComponent<Button>();
-        Button playButton = m_playAnim.GetComponent<Button>();
-       
+
         resetButton.onClick.AddListener(ResetSceneClick);
-       
+
         m_resetScene.SetActive(false);
-        m_playAnim.SetActive(false);
         m_textPosition.SetActive(false);
         m_textReset.SetActive(false);
     }
@@ -39,7 +38,6 @@ public class HandleUI : MonoBehaviour {
         //Output this to console when the Button is clicked
         Debug.Log("You have clicked the button!");
         m_resetScene.SetActive(m_hidden);
-        m_playAnim.SetActive(m_hidden);
         m_textPosition.SetActive(m_hidden);
         m_textReset.SetActive(m_hidden);
     }
@@ -51,11 +49,5 @@ public class HandleUI : MonoBehaviour {
 
         // Reset the scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    void TaskWithParameters(string message)
-    {
-        //Output this to console when the Button is clicked
-        //Debug.Log(message);
     }
 }

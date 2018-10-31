@@ -12,7 +12,6 @@ using UnityEngine.UI;
 public class WitchScript : MonoBehaviour {
 
     public GameObject m_playAnim;
-    public GameObject m_witchSkin;
     public GameObject m_textGameObject;
     public GameObject m_zombieMoan;
     public GameObject m_zombie;
@@ -25,11 +24,15 @@ public class WitchScript : MonoBehaviour {
     private SerialPort stream = null;
     private ZombieState state;
     private float animStartTime = 0;
-    private List<int> list = new List<int>();
+    private List<int> m_list = new List<int>();
     private String m_comPort;
     private Thread mThread;
     private int m_avValue = 0;
     private Vector3 m_originalPosition;
+    private float m_triggerDistance = 0;
+    private int m_checkCount = 0;
+
+    public bool m_isRunning = true;
 
     enum ZombieState {
         Idle,
@@ -40,25 +43,6 @@ public class WitchScript : MonoBehaviour {
 
     // Use this for initialization
     void Start ()
-    {
-        // Setup the buttons
-        Button btn1 = m_playAnim.GetComponent<Button>();
-        m_anim = m_witchSkin.GetComponent<Animator>();
-        m_text = m_textGameObject.GetComponent<Text>();
-        m_zombieMoanSource = m_zombieMoan.GetComponent<AudioSource>();
-
-        btn1.onClick.AddListener(TaskOnClick);
-
-        ChangeState(ZombieState.Idle);
-
-        m_originalPosition = m_zombie.transform.position;
-
-        ThreadStart ts = new ThreadStart(AsyncRead);
-        mThread = new Thread(ts);
-        mThread.Start();
-    }
-
-    void AsyncRead()
     {
         XmlDocument xmlDoc = new XmlDocument();
 
@@ -71,10 +55,33 @@ public class WitchScript : MonoBehaviour {
         XmlNode firstChildElement = root.FirstChild;
 
         m_comPort = root["COM"].InnerText;
+        m_triggerDistance = float.Parse(root["DISTANCE"].InnerText);
         Debug.Log("COM port: " + m_comPort);
 
-        // Open the com port e.g. "\\\\.\\COM12"
-        //m_comPort = "\\\\.\\COM13";
+
+        // Setup the buttons
+        Button btn1 = m_playAnim.GetComponent<Button>();
+        m_anim = m_zombie.GetComponent<Animator>();
+        m_text = m_textGameObject.GetComponent<Text>();
+        m_zombieMoanSource = m_zombieMoan.GetComponent<AudioSource>();
+
+        btn1.onClick.AddListener(TaskOnClick);
+
+        ChangeState(ZombieState.Idle);
+
+        m_originalPosition = m_zombie.transform.position;
+
+        mThread = new Thread( RunThread );
+        mThread.Start( this );
+    }
+
+    void RunThread(object data)
+    {
+        var threadController = (WitchScript)data;
+
+        Debug.Log("Thread argument " + threadController.m_isRunning );
+
+        // Open the com port e.g. "\\.\COM12"
         try
         {
             if (stream == null)
@@ -84,14 +91,23 @@ public class WitchScript : MonoBehaviour {
                 stream.Open();
                 stream.BaseStream.Flush();
             }
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Could not open COM port: " + e.Message);
+        }
 
-            if (stream.IsOpen)
+        while (threadController.m_isRunning)
+        {
+            try
             {
-                while (true)
+                if (stream.IsOpen)
                 {
                     // Read the stream
                     string value = stream.ReadLine();
-                    //Debug.Log("COM value: " + value);
+                    Debug.Log("COM value: " + value);
+
+                    m_checkCount++;
 
                     // Get the value
                     {
@@ -100,40 +116,54 @@ public class WitchScript : MonoBehaviour {
                         // Add to the list
                         if (valueNum > 0)
                         {
-                            if (list.Count > 10)
+                            if (m_list.Count > 10)
                             {
-                                list.RemoveAt(0);
+                                m_list.RemoveAt(0);
                             }
-                            list.Add(valueNum);
+                            m_list.Add(valueNum);
                         }
                     }
 
                     int avNum = 0;
 
                     // Check the list
-                    if (list.Count > 10)
+                    if (m_list.Count > 10)
                     {
                         // Average a list
-                        for (int i = 0; i < list.Count; i++)
+                        for (int i = 0; i < m_list.Count; i++)
                         {
-                            avNum += list[i];
+                            avNum += m_list[i];
                         }
-                        avNum /= list.Count;
+                        avNum /= m_list.Count;
                     }
                     m_avValue = avNum;
                 }
             }
+            catch (Exception e)
+            {
+                Debug.Log("Could not read from COM port: " + e.Message);
+            }
         }
-        catch (Exception e)
-        {
-            Debug.Log("Could not open COM port: " + e.Message);
-        }
+        Debug.Log("Thread ended");
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
+        m_isRunning = false;
         Debug.Log("OnDestroy");
-        mThread.Abort();
+    }
+
+    void Reset()
+    {
+        m_zombie.transform.position = m_originalPosition;
+        m_list.Clear();
+        m_avValue = 0;
+        m_anim.ResetTrigger("Attack");
+        m_anim.ResetTrigger("Walk");
+        m_anim.ResetTrigger("Retreat");
+        m_anim.Play("idle");
+        ChangeState(ZombieState.Idle);
+        m_zombieMoanSource.Play();
     }
 
     void ChangeState(ZombieState newState)
@@ -158,7 +188,7 @@ public class WitchScript : MonoBehaviour {
     // Update is called once per frame
     void Update () {
         // Get the transform
-        m_position = m_witchSkin.transform.position;
+        m_position = m_zombie.transform.position;
 
         if (Input.GetKey(KeyCode.Return ))
         {
@@ -172,7 +202,7 @@ public class WitchScript : MonoBehaviour {
             Walk();
         }
 
-        if (Input.GetKey(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.R))
         {
             Retreat();
         }
@@ -180,18 +210,10 @@ public class WitchScript : MonoBehaviour {
         // Average between 10 and 100
         if (state == ZombieState.Idle)
         {
-            if (m_avValue < 100)
+            if(( m_avValue > 10 ) && (m_avValue < m_triggerDistance))
             {
                 Walk();
                 Debug.Log("Set animation to walk: " + animStartTime);
-            }
-        }
-        else if (state == ZombieState.Attack)
-        {
-            // Average between 10 and 100
-            if( (m_avValue < 50 ) && (elapsedTime > 5.0f) )
-            {
-                Retreat();
             }
         }
         else if (state == ZombieState.Walking)
@@ -203,25 +225,33 @@ public class WitchScript : MonoBehaviour {
                 Debug.Log("Set animation to attack: " + animStartTime);
             }
         }
+        else if (state == ZombieState.Attack)
+        {
+            // Average between 10 and 100
+            if ((m_avValue > 10) && (m_avValue < m_triggerDistance) && (elapsedTime > 5.0f))
+            {
+                Retreat();
+            }
+            if (elapsedTime > 20.0f)
+            {
+                Retreat();
+            }
+        }
         else if (state == ZombieState.Retreat)
         {
             if (elapsedTime > 10.0f)
             {
-                ChangeState(ZombieState.Idle);
-                m_anim.Play("idle");
-                m_zombie.transform.position = m_originalPosition;
-                list.Clear();
-                m_avValue = 0;
+                Reset();
                 //SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
         }
 
-        m_text.text = "Version 31.13\nVars: " +
-        m_position.z.ToString("0.00") + "\n" +
-        m_avValue.ToString("0.00") + "\n" +
-        elapsedTime.ToString("0.00") + "\n" +
-        "List count " + list.Count + "\n" +
-        m_comPort;
+        m_text.text = "Version 31.2\n" +
+        "Zombie position: " + m_position.z.ToString("0.00") + "\n" +
+        "Sensed distance: " + m_avValue.ToString("0.00") + " " + m_checkCount.ToString() + " " + m_list.Count + "\n" +
+        "Elapsed: " + elapsedTime.ToString("0.00") + "\n" +
+        "Trigger: " + m_triggerDistance.ToString("0.00") + "\n" +
+        "COM Port: " + m_comPort;
     }
 
     void TaskOnClick()
